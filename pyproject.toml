@@ -21,4 +21,5 @@ dependencies = [
     "colorlog>=6.10.1",
     "celery>=5.5.3",
     "redis>=7.0.1",
+    "slowapi>=0.1.9",
 ]

@@ -18,3 +18,6 @@ class LoginRequest(BaseModel):
     password: str
 
     model_config = ConfigDict(extra="forbid")
+
+class RefreshRequest(BaseModel):
+    refresh_token:str

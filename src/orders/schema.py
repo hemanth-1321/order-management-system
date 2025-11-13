@@ -7,6 +7,7 @@ class StatusEnum(str, Enum):
     PENDING = "PENDING"
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED" 
 
 class OrderCreate(BaseModel):
     product_name: str = Field(..., min_length=1)

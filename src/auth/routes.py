@@ -1,7 +1,8 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status,Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from src.config.ratelimiting import limiter 
 
-from src.auth.schema import UserCreate, LoginRequest
+from src.auth.schema import UserCreate, LoginRequest, RefreshRequest
 from src.auth.services import UserService
 from src.database.db import SessionDep
 
@@ -10,7 +11,8 @@ auth_router = APIRouter()
 
 
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED)
-async def signup(user_data: UserCreate, session: SessionDep):
+@limiter.limit("5/minute") 
+async def signup(user_data: UserCreate, session: SessionDep, request: Request):
     logger.debug(f"Received signup request for {user_data.email}")
     service = UserService(session)
     try:
@@ -23,7 +25,8 @@ async def signup(user_data: UserCreate, session: SessionDep):
 
 
 @auth_router.post("/login")
-async def login(login_data: LoginRequest, session: SessionDep,response:Response):
+@limiter.limit("5/minute") 
+async def login(login_data: LoginRequest, session: SessionDep, response: Response, request: Request):
     logger.debug(f"Login attempt for email: {login_data.email}")
     service = UserService(session)
     user = await service.authenticate_user(login_data.email, login_data.password)
@@ -39,35 +42,31 @@ async def login(login_data: LoginRequest, session: SessionDep,response:Response)
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
-        httponly=True,         
-        secure=True,            
-        samesite="strict",     
-        max_age=7 * 24 * 60 * 60  
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=7 * 24 * 60 * 60
     )
     logger.info(f"Tokens issued for {login_data.email}")
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @auth_router.post("/refresh")
-async def refresh_token(payload: dict, session: SessionDep):
-    """Exchange refresh token for new access token."""
-    refresh_token = payload.get("refresh_token")
-    if not refresh_token:
+@limiter.limit("10/minute")  
+async def refresh_token(request: RefreshRequest, session: SessionDep, req: Request):
+    if not request.refresh_token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Refresh token is required",
         )
 
     service = UserService(session)
-    new_access_token = await service.refresh_access_token(refresh_token)
+    new_access_token = await service.refresh_access_token(request.refresh_token)
 
     if not new_access_token:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
         )
 
     logger.info("Access token refreshed successfully")

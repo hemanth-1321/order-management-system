@@ -18,3 +18,4 @@ Config=Settings()
 
 broker_url=Config.REDIS_URL
 results_BACKEND=Config.REDIS_URL
+brokder_connection_retry_on_startup=True
