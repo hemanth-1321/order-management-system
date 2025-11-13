@@ -7,16 +7,14 @@ from sqlalchemy import String, Float, DateTime, ForeignKey, Enum as SQLEnum, Ind
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.database.db import Base  
 
-# Enum
+
 class STATUS(enum.Enum):
     PENDING = "PENDING"
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
 
-# -------------------
-# Models
-# -------------------
+
 class User(Base):
     __tablename__ = "users"
 

@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from src.auth.routes import auth_router
+from src.orders.routes import order_router
 from src.config.logger import configure_logging
 
 configure_logging("INFO")
@@ -20,7 +21,7 @@ def health():
     return {"msg": "Hello world, Health check"}
 
 app.include_router(auth_router, prefix="/auth", tags=["users"])
-
+app.include_router(order_router,prefix="/orders",tags=["orders"])
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
