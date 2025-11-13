@@ -1,30 +1,40 @@
-from celery import Celery
 import asyncio
 import logging
-
-from src.database.db import async_session_maker
+from celery import Celery
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from src.database.models import Order, STATUS
-from src.config.logger import configure_logging
-
+from src.config.settings import Config
 app = Celery("tasks")
 app.config_from_object("src.config.settings")
-
-# Logging
-configure_logging("INFO")
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@app.task
-def process_order(order_id: str):
+def get_task_session_maker():
     """
-    Celery task to process an order asynchronously.
-    Wrap async code in asyncio.run() since Celery cannot handle async directly.
+    Create a new AsyncEngine + sessionmaker inside the task
+    (safe for prefork Celery workers)
     """
+    engine = create_async_engine(
+        url=Config.DATABASE_URL,
+        echo=False,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10
+    )
+    return async_sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)
+
+@app.task(bind=True)
+def process_order(self, order_id: str):
+    logger.info(f"[Task] process_order started for Order ID: {order_id}")
+
     async def _process():
-        async with async_session_maker() as session:
+        # Create session maker after fork
+        session_maker = get_task_session_maker()
+        async with session_maker() as session:
             order = await session.get(Order, order_id)
             if not order:
-                logger.warning(f"[Order {order_id}] Order not found!")
-                return
+                logger.warning(f"[Order {order_id}] not found")
+                return f"[Order {order_id}] not found"
 
             stages = [
                 (STATUS.PROCESSING, "Processing order"),
@@ -38,5 +48,10 @@ def process_order(order_id: str):
                 await asyncio.sleep(2)
 
             logger.info(f"[Order {order_id}] Processing complete!")
+            return f"Order {order_id} processed successfully"
 
-    asyncio.run(_process())
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(_process())
+    loop.close()
+    return result
