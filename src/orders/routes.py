@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from src.celery_tasks import process_order
 from src.auth.dependencies import get_current_user
 from src.database.db import SessionDep
 from src.orders.services import OrderService
@@ -22,6 +22,8 @@ async def create_order(
         product_name=order_data.product_name,
         amount=order_data.amount
     )
+    process_order.delay(order.id)
+
     return order
 
 @order_router.get("/my-orders", response_model=list[OrderRead])

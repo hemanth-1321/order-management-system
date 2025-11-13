@@ -19,4 +19,6 @@ dependencies = [
     "uvicorn>=0.38.0",
     "bcrypt>=5.0.0",
     "colorlog>=6.10.1",
+    "celery>=5.5.3",
+    "redis>=7.0.1",
 ]
