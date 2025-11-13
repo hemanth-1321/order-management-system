@@ -1,14 +1,7 @@
-Got it! Here’s a polished version of your README with:
-
-- **Initial manual pip install using `uv sync`** included in the setup.
-- **Postman collection note** included for testing.
-
 ---
-
 # Order Management System
 
 A FastAPI + PostgreSQL + Redis + Celery-based asynchronous order processing system.
-
 ---
 
 ## Features
@@ -19,6 +12,26 @@ A FastAPI + PostgreSQL + Redis + Celery-based asynchronous order processing syst
 - Background order processing using Celery
 - Redis as Celery broker
 - Async-safe task handling
+
+---
+
+## Design Decisions
+
+This system is designed to be **highly responsive and scalable**:
+
+- **FastAPI**: Chosen for its async support, speed, and automatic API documentation via Swagger/Redoc.
+- **PostgreSQL + Async SQLAlchemy**: Reliable relational database with non-blocking async operations.
+- **Redis**: Used as a Celery broker.
+- **Celery Async Tasks vs Cron Jobs**:
+
+  - **Reason for Celery**: Cron jobs are time-based and poll the database at intervals, which can introduce delays and inefficiency. Celery allows **real-time background processing** immediately when a new order is created.
+  - Async Celery tasks are event-driven, non-blocking, and scale better with multiple workers.
+
+- **JWT Authentication**: Stateless and secure way to protect endpoints.
+- **.env Configuration**: Centralized configuration makes switching environments simple.
+- **Docker Compose**: Ensures consistent environment setup for PostgreSQL and Redis.
+- **Manual `uv sync` Install**: Keeps dependency management under controlled virtual environment.
+- **Postman Collection**: Provides ready-made tests for all endpoints.
 
 ---
 
@@ -57,19 +70,19 @@ source .venv/bin/activate
 uv sync
 ```
 
-> This will install all required packages like FastAPI, Uvicorn, SQLAlchemy, Celery, Redis, Python-dotenv, Passlib, and PyJWT.
+> Installs FastAPI, Uvicorn, SQLAlchemy, Celery, Redis, Python-dotenv, Passlib, PyJWT, and other required packages.
 
 ---
 
 ## Docker Compose Setup
 
-We provide a `docker-compose.yml` that spins up **PostgreSQL** and **Redis**:
+A `docker-compose.yml` is provided to spin up **PostgreSQL** and **Redis**:
 
 ```bash
 docker-compose up -d
 ```
 
-This will start:
+This starts:
 
 - PostgreSQL database
 - Redis server for Celery
@@ -100,7 +113,7 @@ celery -A src.celery_tasks worker --loglevel=info
 
 > Use `-P solo` if you encounter async loop issues.
 
-Your FastAPI endpoints can enqueue tasks like this:
+Example usage in FastAPI endpoint:
 
 ```python
 from src.celery_tasks import process_order
@@ -127,6 +140,12 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-> For testing, a `postman_collection.json` is provided. Import it into Postman to test all endpoints quickly.
+> A `postman_collection.json` is provided. Import it into Postman to test all endpoints quickly.
+
+---
+
+## License
+
+MIT License
 
 ---
