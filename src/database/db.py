@@ -6,12 +6,10 @@ from sqlalchemy.orm import DeclarativeBase
 from fastapi import Depends
 from src.config.settings import Config
 
-# Base for models
 class Base(AsyncAttrs,DeclarativeBase):
     pass
 
-# Async engine & session
-engine = create_async_engine(url=Config.DATABASE_URL, echo=True)
+engine = create_async_engine(url=Config.DATABASE_URL, echo=False)
 async_session_maker = async_sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
