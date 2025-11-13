@@ -1,17 +1,19 @@
 ---
 # Order Management System
 
-A FastAPI + PostgreSQL + Redis + Celery-based asynchronous order processing system.
+A **FastAPI + PostgreSQL + Redis + Celery** asynchronous order processing system with JWT authentication, rate limiting, and status-based order filtering.
 ---
 
 ## Features
 
 - FastAPI REST API for managing orders
-- JWT authentication
+- JWT authentication with access & refresh tokens
 - Async database operations using SQLAlchemy + `asyncpg`
 - Background order processing using Celery
 - Redis as Celery broker
 - Async-safe task handling
+- **Rate limiting per endpoint**
+- **Filter orders by status**
 
 ---
 
@@ -19,25 +21,32 @@ A FastAPI + PostgreSQL + Redis + Celery-based asynchronous order processing syst
 
 This system is designed to be **highly responsive and scalable**:
 
-- **FastAPI**: Chosen for its async support, speed, and automatic API documentation via Swagger/Redoc.
-- **PostgreSQL + Async SQLAlchemy**: Reliable relational database with non-blocking async operations.
-- **Redis**: Used as a Celery broker.
+- **FastAPI**: Async support, speed, and automatic API documentation.
+
+- **PostgreSQL + Async SQLAlchemy**: Reliable relational database with non-blocking operations.
+
+- **Redis**: Celery broker for background tasks.
+
 - **Celery Async Tasks vs Cron Jobs**:
 
-  - **Reason for Celery**: Cron jobs are time-based and poll the database at intervals, which can introduce delays and inefficiency. Celery allows **real-time background processing** immediately when a new order is created.
-  - Async Celery tasks are event-driven, non-blocking, and scale better with multiple workers.
+  - Cron jobs poll the database periodically and can introduce delays.
+  - Celery tasks are **event-driven**, real-time, non-blocking, and scale well with multiple workers.
 
-- **JWT Authentication**: Stateless and secure way to protect endpoints.
-- **.env Configuration**: Centralized configuration makes switching environments simple.
-- **Docker Compose**: Ensures consistent environment setup for PostgreSQL and Redis.
-- **Manual `uv sync` Install**: Keeps dependency management under controlled virtual environment.
-- **Postman Collection**: Provides ready-made tests for all endpoints.
+- **JWT Authentication**: Stateless and secure.
+
+- **Rate Limiting**: Prevents abuse per endpoint.
+
+- **Status-based Filtering**: Query orders by `STATUS` (`PENDING`, `PROCESSING`, `COMPLETED`, `CANCELLED`).
+
+- **Docker Compose**: Consistent setup for PostgreSQL and Redis.
+
+- **Postman Collection**: Ready-made tests for all endpoints.
 
 ---
 
 ## Environment Variables
 
-Create a `.env` file in the project root with the following:
+Create a `.env` file in the project root:
 
 ```env
 JWT_SECRET=your_jwt_secret_key
@@ -64,7 +73,7 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. Install dependencies manually
+### 3. Install dependencies
 
 ```bash
 uv sync
@@ -76,24 +85,15 @@ uv sync
 
 ## Docker Compose Setup
 
-A `docker-compose.yml` is provided to spin up **PostgreSQL** and **Redis**:
+Spin up PostgreSQL and Redis:
 
 ```bash
 docker-compose up -d
 ```
 
-This starts:
-
-- PostgreSQL database
-- Redis server for Celery
-
-No manual Docker commands needed.
-
 ---
 
 ## Running the API
-
-In one terminal:
 
 ```bash
 uvicorn src.main:app --reload
@@ -105,42 +105,47 @@ uvicorn src.main:app --reload
 
 ## Celery Worker
 
-In a separate terminal:
-
 ```bash
 celery -A src.celery_tasks worker --loglevel=info
 ```
 
-> Use `-P solo` if you encounter async loop issues.
-
-Example usage in FastAPI endpoint:
+- Use `-P solo` if async loop issues occur.
+- Example in FastAPI endpoint:
 
 ```python
 from src.celery_tasks import process_order
-
 process_order.delay(order_id)
 ```
 
 ---
 
+## Rate Limiting
+
+Each endpoint has a per-minute limit:
+
+| Endpoint              | Limit  |
+| --------------------- | ------ |
+| `/auth/register`      | 5/min  |
+| `/auth/login`         | 5/min  |
+| `/auth/refresh`       | 10/min |
+| `/orders/create`      | 20/min |
+| `/orders/my-orders`   | 30/min |
+| `/orders/{id}/cancel` | 10/min |
+
+---
+
+## Background Processing
+
+- Orders are processed asynchronously using **Celery**.
+- Status flow: `PENDING → PROCESSING → COMPLETED`.
+- Logs show all processed orders.
+
+---
+
 ## Testing
 
-You can use **Postman** or **HTTPie**.
-
-### Example: Create Order
-
-```http
-POST /orders/create
-Content-Type: application/json
-Authorization: Bearer <JWT_TOKEN>
-
-{
-    "product_name": "Book",
-    "amount": 99.0
-}
-```
-
-> A `postman_collection.json` is provided. Import it into Postman to test all endpoints quickly.
+- Use **Postman** or **HTTPie**.
+- Postman collection provided (`postman_collection.json`) with all endpoints ready for testing.
 
 ---
 
