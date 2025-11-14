@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, status,Request,Query
 from src.celery_tasks import process_order
 from src.auth.dependencies import get_current_user
 from src.database.db import SessionDep
-import logging
 from src.orders.services import OrderService
 from src.orders.schema import OrderCreate, OrderRead
 from src.database.models import User,STATUS
@@ -24,8 +23,7 @@ async def create_order(
         amount=order_data.amount
     )
 
-    result= process_order.delay(str(order.id)) 
-    logging.info(result.get())
+    process_order.delay(str(order.id)) 
 
     return order
 
