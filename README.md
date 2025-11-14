@@ -73,10 +73,7 @@ cd order-management-system
 python -m venv .venv
 source .venv/bin/activate
 ```
-### alembic 
-```bash
-alembic upgrade head
-```
+
 
 ### 3. Install dependencies
 
@@ -97,6 +94,11 @@ docker-compose up -d
 ```
 
 ---
+
+### alembic 
+```bash
+alembic upgrade head
+```
 
 ## Running the API
 
