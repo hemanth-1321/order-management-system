@@ -82,19 +82,26 @@
           },
           "response": []
         },
+
         {
-          "name": "Get My Orders",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": {
-              "raw": "{{base_url}}/orders/my-orders",
-              "host": ["{{base_url}}"],
-              "path": ["orders", "my-orders"]
-            }
-          },
-          "response": []
-        },
+  "name": "Get My Orders",
+  "request": {
+    "method": "GET",
+    "header": [
+      { "key": "Authorization", "value": "Bearer {{access_token}}" }
+    ],
+    "url": {
+      "raw": "{{base_url}}/orders/my-orders?status=PENDING",
+      "host": ["{{base_url}}"],
+      "path": ["orders", "my-orders"],
+      "query": [
+        { "key": "status", "value": "PENDING" }
+      ]
+    }
+  },
+  "response": []
+},
+
         {
           "name": "Cancel Order",
           "request": {
