@@ -1,4 +1,3 @@
-
 ---
 # Order Management System
 
@@ -74,7 +73,6 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-
 ### 3. Install dependencies
 
 ```bash
@@ -95,7 +93,8 @@ docker-compose up -d
 
 ---
 
-### alembic 
+### alembic
+
 ```bash
 alembic upgrade head
 ```
@@ -103,7 +102,7 @@ alembic upgrade head
 ## Running the API
 
 ```bash
-uvicorn src.main:app --reload
+uvicorn main:app --reload
 ```
 
 - API docs: `http://localhost:8000/docs`
