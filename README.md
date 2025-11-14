@@ -1,3 +1,4 @@
+
 ---
 # Order Management System
 
@@ -71,6 +72,10 @@ cd order-management-system
 ```bash
 python -m venv .venv
 source .venv/bin/activate
+```
+### alembic 
+```bash
+alembic upgrade head
 ```
 
 ### 3. Install dependencies
