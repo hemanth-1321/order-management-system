@@ -1,4 +1,3 @@
-# src/database/db.py
 from typing import Annotated, AsyncGenerator
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
